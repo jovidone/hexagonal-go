@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/gin-gonic/gin"
 	"hexagonal-go/internal/adapters/http"
+	"hexagonal-go/internal/adapters/http/middleware"
 	"hexagonal-go/internal/adapters/repository"
 	"hexagonal-go/internal/config"
 	"hexagonal-go/internal/core/services"
@@ -34,9 +35,13 @@ func main() {
 	r.POST("/register", userHandler.Register)
 	r.POST("/login", userHandler.Login)
 
-	// Endpoint transaction
-	r.POST("/deposit", transactionHandler.Deposit)
-	r.POST("/withdraw", transactionHandler.Withdraw)
+	// Endpoint transaction with authentication middleware
+	auth := r.Group("/")
+	auth.Use(middleware.AuthMiddleware())
+	{
+		auth.POST("/deposit", transactionHandler.Deposit)
+		auth.POST("/withdraw", transactionHandler.Withdraw)
+	}
 
 	// Jalankan server pada port 8080
 	r.Run(":8080")
