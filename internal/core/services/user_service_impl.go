@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"golang.org/x/crypto/bcrypt"
 	"hexagonal-go/internal/core/domain"
 	"hexagonal-go/internal/core/ports"
 )
@@ -15,6 +16,11 @@ func NewUserService(userRepo ports.UserRepository) *UserService {
 }
 
 func (s *UserService) Register(user *domain.User) error {
+	hashedPin, err := bcrypt.GenerateFromPassword([]byte(user.Pin), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+	user.Pin = string(hashedPin)
 	return s.userRepo.Create(user)
 }
 
@@ -23,7 +29,7 @@ func (s *UserService) Login(phoneNumber, pin string) (*domain.User, error) {
 	if err != nil {
 		return nil, err
 	}
-	if user.Pin != pin {
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Pin), []byte(pin)); err != nil {
 		return nil, errors.New("invalid pin")
 	}
 	return user, nil
