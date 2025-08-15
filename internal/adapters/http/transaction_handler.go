@@ -60,3 +60,18 @@ func (h *TransactionHandler) Withdraw(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"status": "SUCCESS", "result": tx})
 }
+
+func (h *TransactionHandler) GetTransactions(c *gin.Context) {
+	userIDParam := c.Param("user_id")
+	userID, err := uuid.Parse(userIDParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user id"})
+		return
+	}
+	txs, err := h.transactionService.GetTransactionsByUser(userID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": "SUCCESS", "result": txs})
+}

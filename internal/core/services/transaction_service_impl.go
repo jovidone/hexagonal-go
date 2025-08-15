@@ -67,3 +67,7 @@ func (s *TransactionService) Withdraw(userID uuid.UUID, amount float64, remarks 
 	}
 	return &tx, nil
 }
+
+func (s *TransactionService) GetTransactionsByUser(userID uuid.UUID) ([]domain.Transaction, error) {
+	return s.transactionRepo.FindByUser(userID)
+}
