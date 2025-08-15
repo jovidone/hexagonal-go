@@ -1,9 +1,10 @@
 package utils
 
 import (
-	"errors"
-	"github.com/golang-jwt/jwt/v5"
-	"time"
+        "errors"
+        "fmt"
+        "github.com/golang-jwt/jwt/v5"
+        "time"
 )
 
 var jwtKey = []byte("secret-key")
@@ -32,17 +33,20 @@ func GenerateJWT(userID string) (string, error) {
 }
 
 func ValidateJWT(tokenString string) (string, error) {
-	claims := &Claims{}
+        claims := &Claims{}
 
-	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
-		return jwtKey, nil
-	})
-	if err != nil {
-		return "", err
-	}
+        token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+                if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+                        return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+                }
+                return jwtKey, nil
+        })
+        if err != nil {
+                return "", err
+        }
 
-	if !token.Valid {
-		return "", errors.New("invalid token")
-	}
-	return claims.UserID, nil
+        if !token.Valid {
+                return "", errors.New("invalid token")
+        }
+        return claims.UserID, nil
 }
