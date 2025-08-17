@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 	"hexagonal-go/internal/core/domain"
 	"hexagonal-go/internal/core/ports"
@@ -33,4 +34,8 @@ func (s *UserService) Login(phoneNumber, pin string) (*domain.User, error) {
 		return nil, errors.New("invalid pin")
 	}
 	return user, nil
+}
+
+func (s *UserService) GetByID(id uuid.UUID) (*domain.User, error) {
+	return s.userRepo.FindByID(id)
 }

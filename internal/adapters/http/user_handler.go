@@ -2,6 +2,7 @@ package http
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"hexagonal-go/internal/core/domain"
 	"hexagonal-go/internal/core/services"
 	"hexagonal-go/internal/utils"
@@ -67,4 +68,28 @@ func (h *UserHandler) Login(c *gin.Context) {
 			"refresh_token": "", // Jika ada refresh token
 		},
 	})
+}
+
+func (h *UserHandler) Profile(c *gin.Context) {
+	userIDVal, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "userID not found"})
+		return
+	}
+	userIDStr, ok := userIDVal.(string)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid userID type"})
+		return
+	}
+	id, err := uuid.Parse(userIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user id"})
+		return
+	}
+	user, err := h.userService.GetByID(id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": "SUCCESS", "result": user})
 }
