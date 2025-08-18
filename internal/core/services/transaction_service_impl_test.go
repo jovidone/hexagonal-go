@@ -133,6 +133,87 @@ func setupTestDB(t *testing.T) *gorm.DB {
 	return db
 }
 
+func TestTransactionService_Deposit_Success(t *testing.T) {
+	db := setupTestDB(t)
+	repo := &testTransactionRepo{db: db}
+	service := NewTransactionService(repo, db)
+	user := domain.User{UserID: uuid.New(), FirstName: "A", LastName: "B", PhoneNumber: "111", Address: "addr", Pin: "1234", Balance: 100}
+	db.Create(&user)
+
+	tx, err := service.Deposit(user.UserID, 50, "deposit")
+	if err != nil {
+		t.Fatalf("expected nil error, got %v", err)
+	}
+
+	var updated domain.User
+	db.First(&updated, "user_id = ?", user.UserID)
+	if updated.Balance != 150 {
+		t.Fatalf("expected balance 150, got %v", updated.Balance)
+	}
+
+	var count int64
+	db.Model(&domain.Transaction{}).Count(&count)
+	if count != 1 {
+		t.Fatalf("expected 1 transaction, got %d", count)
+	}
+	if tx.TransactionType != "CREDIT" || tx.Amount != 50 {
+		t.Fatalf("unexpected transaction: %+v", tx)
+	}
+}
+
+func TestTransactionService_Withdraw_Success(t *testing.T) {
+	db := setupTestDB(t)
+	repo := &testTransactionRepo{db: db}
+	service := NewTransactionService(repo, db)
+	user := domain.User{UserID: uuid.New(), FirstName: "A", LastName: "B", PhoneNumber: "111", Address: "addr", Pin: "1234", Balance: 100}
+	db.Create(&user)
+
+	tx, err := service.Withdraw(user.UserID, 40, "withdraw")
+	if err != nil {
+		t.Fatalf("expected nil error, got %v", err)
+	}
+
+	var updated domain.User
+	db.First(&updated, "user_id = ?", user.UserID)
+	if updated.Balance != 60 {
+		t.Fatalf("expected balance 60, got %v", updated.Balance)
+	}
+
+	var count int64
+	db.Model(&domain.Transaction{}).Count(&count)
+	if count != 1 {
+		t.Fatalf("expected 1 transaction, got %d", count)
+	}
+	if tx.TransactionType != "DEBIT" || tx.Amount != 40 {
+		t.Fatalf("unexpected transaction: %+v", tx)
+	}
+}
+
+func TestTransactionService_Withdraw_InsufficientFunds(t *testing.T) {
+	db := setupTestDB(t)
+	repo := &testTransactionRepo{db: db}
+	service := NewTransactionService(repo, db)
+	user := domain.User{UserID: uuid.New(), FirstName: "A", LastName: "B", PhoneNumber: "111", Address: "addr", Pin: "1234", Balance: 20}
+	db.Create(&user)
+
+	_, err := service.Withdraw(user.UserID, 40, "withdraw")
+	if err == nil {
+		t.Fatalf("expected error, got nil")
+	}
+
+	var updated domain.User
+	db.First(&updated, "user_id = ?", user.UserID)
+	if updated.Balance != 20 {
+		t.Fatalf("expected balance 20, got %v", updated.Balance)
+	}
+
+	var count int64
+	db.Model(&domain.Transaction{}).Count(&count)
+	if count != 0 {
+		t.Fatalf("expected 0 transactions, got %d", count)
+	}
+}
+
 func TestTransactionService_Transfer_Success(t *testing.T) {
 	db := setupTestDB(t)
 	repo := &testTransactionRepo{db: db}
