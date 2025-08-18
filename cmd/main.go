@@ -34,6 +34,7 @@ func main() {
 	// Endpoint user
 	r.POST("/register", userHandler.Register)
 	r.POST("/login", userHandler.Login)
+	r.POST("/refresh", userHandler.RefreshToken)
 
 	// Endpoint transaction with authentication middleware
 	auth := r.Group("/")
