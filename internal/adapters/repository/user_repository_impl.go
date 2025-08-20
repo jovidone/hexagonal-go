@@ -43,3 +43,7 @@ func (r *UserRepositoryImpl) Update(user *domain.User) error {
 func (r *UserRepositoryImpl) UpdatePin(userID uuid.UUID, hashedPin string) error {
 	return r.db.Model(&domain.User{}).Where("user_id = ?", userID).Update("pin", hashedPin).Error
 }
+
+func (r *UserRepositoryImpl) SetActive(userID uuid.UUID, active bool) error {
+	return r.db.Model(&domain.User{}).Where("user_id = ?", userID).Update("is_active", active).Error
+}

@@ -11,4 +11,5 @@ type UserRepository interface {
 	FindByID(id uuid.UUID) (*domain.User, error)
 	Update(user *domain.User) error
 	UpdatePin(userID uuid.UUID, hashedPin string) error
+	SetActive(userID uuid.UUID, active bool) error
 }

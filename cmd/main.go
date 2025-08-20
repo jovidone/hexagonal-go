@@ -47,6 +47,8 @@ func main() {
 		auth.GET("/profile", userHandler.Profile)
 		auth.PUT("/profile", userHandler.UpdateProfile)
 		auth.PUT("/pin", userHandler.ChangePin)
+		auth.PUT("/deactivate", userHandler.Deactivate)
+		auth.PUT("/activate", userHandler.Activate)
 	}
 
 	// Jalankan server pada port 8080

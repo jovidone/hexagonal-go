@@ -16,6 +16,7 @@ type mockUserRepository struct {
 	findByIDFn          func(id uuid.UUID) (*domain.User, error)
 	updateFn            func(user *domain.User) error
 	updatePinFn         func(userID uuid.UUID, hashedPin string) error
+	setActiveFn         func(userID uuid.UUID, active bool) error
 }
 
 var _ ports.UserRepository = (*mockUserRepository)(nil)
@@ -55,6 +56,13 @@ func (m *mockUserRepository) UpdatePin(userID uuid.UUID, hashedPin string) error
 	return nil
 }
 
+func (m *mockUserRepository) SetActive(userID uuid.UUID, active bool) error {
+	if m.setActiveFn != nil {
+		return m.setActiveFn(userID, active)
+	}
+	return nil
+}
+
 func TestUserServiceRegister(t *testing.T) {
 	var savedUser *domain.User
 	repo := &mockUserRepository{
@@ -83,7 +91,7 @@ func TestUserServiceLogin(t *testing.T) {
 	hashed, _ := bcrypt.GenerateFromPassword([]byte("1234"), bcrypt.DefaultCost)
 	repo := &mockUserRepository{
 		findByPhoneNumberFn: func(phone string) (*domain.User, error) {
-			return &domain.User{PhoneNumber: phone, Pin: string(hashed)}, nil
+			return &domain.User{PhoneNumber: phone, Pin: string(hashed), IsActive: true}, nil
 		},
 	}
 	service := NewUserService(repo)
@@ -93,6 +101,20 @@ func TestUserServiceLogin(t *testing.T) {
 	}
 	if _, err := service.Login("08123", "4321"); err == nil {
 		t.Fatalf("expected error for invalid pin")
+	}
+}
+
+func TestUserServiceLoginInactiveUser(t *testing.T) {
+	hashed, _ := bcrypt.GenerateFromPassword([]byte("1234"), bcrypt.DefaultCost)
+	repo := &mockUserRepository{
+		findByPhoneNumberFn: func(phone string) (*domain.User, error) {
+			return &domain.User{PhoneNumber: phone, Pin: string(hashed), IsActive: false}, nil
+		},
+	}
+	service := NewUserService(repo)
+
+	if _, err := service.Login("08123", "1234"); err == nil {
+		t.Fatalf("expected error for inactive user")
 	}
 }
 

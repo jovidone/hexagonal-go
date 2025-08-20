@@ -160,6 +160,52 @@ func (h *UserHandler) ChangePin(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "SUCCESS"})
 }
 
+func (h *UserHandler) Deactivate(c *gin.Context) {
+	userIDVal, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "userID not found"})
+		return
+	}
+	userIDStr, ok := userIDVal.(string)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid userID type"})
+		return
+	}
+	id, err := uuid.Parse(userIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user id"})
+		return
+	}
+	if err := h.userService.SetActive(id, false); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": "SUCCESS"})
+}
+
+func (h *UserHandler) Activate(c *gin.Context) {
+	userIDVal, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "userID not found"})
+		return
+	}
+	userIDStr, ok := userIDVal.(string)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid userID type"})
+		return
+	}
+	id, err := uuid.Parse(userIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user id"})
+		return
+	}
+	if err := h.userService.SetActive(id, true); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": "SUCCESS"})
+}
+
 // RefreshToken handler untuk endpoint /refresh
 func (h *UserHandler) RefreshToken(c *gin.Context) {
 	var request struct {
