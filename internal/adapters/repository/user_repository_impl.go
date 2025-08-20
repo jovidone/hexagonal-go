@@ -39,3 +39,7 @@ func (r *UserRepositoryImpl) FindByID(id uuid.UUID) (*domain.User, error) {
 func (r *UserRepositoryImpl) Update(user *domain.User) error {
 	return r.db.Save(user).Error
 }
+
+func (r *UserRepositoryImpl) UpdatePin(userID uuid.UUID, hashedPin string) error {
+	return r.db.Model(&domain.User{}).Where("user_id = ?", userID).Update("pin", hashedPin).Error
+}

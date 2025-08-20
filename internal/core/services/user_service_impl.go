@@ -43,3 +43,18 @@ func (s *UserService) GetByID(id uuid.UUID) (*domain.User, error) {
 func (s *UserService) UpdateProfile(user *domain.User) error {
 	return s.userRepo.Update(user)
 }
+
+func (s *UserService) ChangePin(userID uuid.UUID, oldPin, newPin string) error {
+	user, err := s.userRepo.FindByID(userID)
+	if err != nil {
+		return err
+	}
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Pin), []byte(oldPin)); err != nil {
+		return errors.New("invalid old pin")
+	}
+	hashed, err := bcrypt.GenerateFromPassword([]byte(newPin), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+	return s.userRepo.UpdatePin(userID, string(hashed))
+}

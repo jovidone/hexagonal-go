@@ -15,6 +15,7 @@ type mockUserRepository struct {
 	findByPhoneNumberFn func(phoneNumber string) (*domain.User, error)
 	findByIDFn          func(id uuid.UUID) (*domain.User, error)
 	updateFn            func(user *domain.User) error
+	updatePinFn         func(userID uuid.UUID, hashedPin string) error
 }
 
 var _ ports.UserRepository = (*mockUserRepository)(nil)
@@ -43,6 +44,13 @@ func (m *mockUserRepository) FindByID(id uuid.UUID) (*domain.User, error) {
 func (m *mockUserRepository) Update(user *domain.User) error {
 	if m.updateFn != nil {
 		return m.updateFn(user)
+	}
+	return nil
+}
+
+func (m *mockUserRepository) UpdatePin(userID uuid.UUID, hashedPin string) error {
+	if m.updatePinFn != nil {
+		return m.updatePinFn(userID, hashedPin)
 	}
 	return nil
 }
@@ -124,5 +132,51 @@ func TestUserServiceUpdateProfile(t *testing.T) {
 	}
 	if updatedUser != user {
 		t.Fatalf("expected update to be called with user")
+	}
+}
+
+func TestUserServiceChangePin(t *testing.T) {
+	userID := uuid.New()
+	hashedOld, _ := bcrypt.GenerateFromPassword([]byte("1234"), bcrypt.DefaultCost)
+	var updated bool
+	repo := &mockUserRepository{
+		findByIDFn: func(id uuid.UUID) (*domain.User, error) {
+			return &domain.User{UserID: userID, Pin: string(hashedOld)}, nil
+		},
+		updatePinFn: func(id uuid.UUID, hashedPin string) error {
+			updated = true
+			if id != userID {
+				t.Errorf("expected userID %v, got %v", userID, id)
+			}
+			if err := bcrypt.CompareHashAndPassword([]byte(hashedPin), []byte("4321")); err != nil {
+				t.Errorf("pin was not hashed correctly: %v", err)
+			}
+			return nil
+		},
+	}
+	service := NewUserService(repo)
+	if err := service.ChangePin(userID, "1234", "4321"); err != nil {
+		t.Fatalf("expected nil error, got %v", err)
+	}
+	if !updated {
+		t.Fatalf("expected UpdatePin to be called")
+	}
+}
+
+func TestUserServiceChangePinInvalidOldPin(t *testing.T) {
+	userID := uuid.New()
+	hashedOld, _ := bcrypt.GenerateFromPassword([]byte("1234"), bcrypt.DefaultCost)
+	repo := &mockUserRepository{
+		findByIDFn: func(id uuid.UUID) (*domain.User, error) {
+			return &domain.User{UserID: userID, Pin: string(hashedOld)}, nil
+		},
+		updatePinFn: func(id uuid.UUID, hashedPin string) error {
+			t.Fatalf("UpdatePin should not be called on invalid old pin")
+			return nil
+		},
+	}
+	service := NewUserService(repo)
+	if err := service.ChangePin(userID, "0000", "4321"); err == nil {
+		t.Fatalf("expected error for invalid old pin")
 	}
 }
