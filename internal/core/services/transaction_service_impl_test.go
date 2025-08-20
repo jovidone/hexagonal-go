@@ -21,6 +21,7 @@ type userMigration struct {
 	Address     string
 	Pin         string
 	Balance     float64
+	IsActive    bool
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 }

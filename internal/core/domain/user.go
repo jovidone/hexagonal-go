@@ -13,6 +13,7 @@ type User struct {
 	Address     string    `gorm:"not null" json:"address"`
 	Pin         string    `gorm:"not null" json:"pin"`
 	Balance     float64   `gorm:"default:0" json:"balance"`
+	IsActive    bool      `gorm:"default:true" json:"is_active"`
 	CreatedAt   time.Time `gorm:"autoCreateTime" json:"created_at"`
 	UpdatedAt   time.Time `gorm:"autoUpdateTime" json:"updated_at"`
 }

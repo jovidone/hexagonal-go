@@ -30,6 +30,9 @@ func (s *UserService) Login(phoneNumber, pin string) (*domain.User, error) {
 	if err != nil {
 		return nil, err
 	}
+	if !user.IsActive {
+		return nil, errors.New("user inactive")
+	}
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Pin), []byte(pin)); err != nil {
 		return nil, errors.New("invalid pin")
 	}
@@ -57,4 +60,8 @@ func (s *UserService) ChangePin(userID uuid.UUID, oldPin, newPin string) error {
 		return err
 	}
 	return s.userRepo.UpdatePin(userID, string(hashed))
+}
+
+func (s *UserService) SetActive(userID uuid.UUID, active bool) error {
+	return s.userRepo.SetActive(userID, active)
 }
