@@ -14,6 +14,7 @@ type mockUserRepository struct {
 	createFn            func(user *domain.User) error
 	findByPhoneNumberFn func(phoneNumber string) (*domain.User, error)
 	findByIDFn          func(id uuid.UUID) (*domain.User, error)
+	updateFn            func(user *domain.User) error
 }
 
 var _ ports.UserRepository = (*mockUserRepository)(nil)
@@ -37,6 +38,13 @@ func (m *mockUserRepository) FindByID(id uuid.UUID) (*domain.User, error) {
 		return m.findByIDFn(id)
 	}
 	return nil, errors.New("not implemented")
+}
+
+func (m *mockUserRepository) Update(user *domain.User) error {
+	if m.updateFn != nil {
+		return m.updateFn(user)
+	}
+	return nil
 }
 
 func TestUserServiceRegister(t *testing.T) {
@@ -98,5 +106,23 @@ func TestUserServiceGetByID(t *testing.T) {
 	}
 	if user != expected {
 		t.Fatalf("expected %v, got %v", expected, user)
+	}
+}
+
+func TestUserServiceUpdateProfile(t *testing.T) {
+	var updatedUser *domain.User
+	repo := &mockUserRepository{
+		updateFn: func(u *domain.User) error {
+			updatedUser = u
+			return nil
+		},
+	}
+	service := NewUserService(repo)
+	user := &domain.User{UserID: uuid.New(), FirstName: "New"}
+	if err := service.UpdateProfile(user); err != nil {
+		t.Fatalf("expected nil error, got %v", err)
+	}
+	if updatedUser != user {
+		t.Fatalf("expected update to be called with user")
 	}
 }

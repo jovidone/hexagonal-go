@@ -100,6 +100,35 @@ func (h *UserHandler) Profile(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "SUCCESS", "result": user})
 }
 
+func (h *UserHandler) UpdateProfile(c *gin.Context) {
+	userIDVal, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "userID not found"})
+		return
+	}
+	userIDStr, ok := userIDVal.(string)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid userID type"})
+		return
+	}
+	id, err := uuid.Parse(userIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user id"})
+		return
+	}
+	var user domain.User
+	if err := c.ShouldBindJSON(&user); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
+		return
+	}
+	user.UserID = id
+	if err := h.userService.UpdateProfile(&user); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": "SUCCESS", "result": user})
+}
+
 // RefreshToken handler untuk endpoint /refresh
 func (h *UserHandler) RefreshToken(c *gin.Context) {
 	var request struct {

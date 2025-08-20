@@ -9,4 +9,5 @@ type UserRepository interface {
 	Create(user *domain.User) error
 	FindByPhoneNumber(phoneNumber string) (*domain.User, error)
 	FindByID(id uuid.UUID) (*domain.User, error)
+	Update(user *domain.User) error
 }
