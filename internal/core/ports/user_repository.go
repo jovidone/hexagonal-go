@@ -10,4 +10,5 @@ type UserRepository interface {
 	FindByPhoneNumber(phoneNumber string) (*domain.User, error)
 	FindByID(id uuid.UUID) (*domain.User, error)
 	Update(user *domain.User) error
+	UpdatePin(userID uuid.UUID, hashedPin string) error
 }
