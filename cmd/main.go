@@ -45,6 +45,7 @@ func main() {
 		auth.POST("/transfer", transactionHandler.Transfer)
 		auth.GET("/transactions/:user_id", transactionHandler.GetTransactions)
 		auth.GET("/profile", userHandler.Profile)
+		auth.PUT("/profile", userHandler.UpdateProfile)
 	}
 
 	// Jalankan server pada port 8080

@@ -35,3 +35,7 @@ func (r *UserRepositoryImpl) FindByID(id uuid.UUID) (*domain.User, error) {
 	err := r.db.Where("user_id = ?", id).First(&user).Error
 	return &user, err
 }
+
+func (r *UserRepositoryImpl) Update(user *domain.User) error {
+	return r.db.Save(user).Error
+}

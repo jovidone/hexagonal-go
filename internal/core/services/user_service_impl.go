@@ -39,3 +39,7 @@ func (s *UserService) Login(phoneNumber, pin string) (*domain.User, error) {
 func (s *UserService) GetByID(id uuid.UUID) (*domain.User, error) {
 	return s.userRepo.FindByID(id)
 }
+
+func (s *UserService) UpdateProfile(user *domain.User) error {
+	return s.userRepo.Update(user)
+}
